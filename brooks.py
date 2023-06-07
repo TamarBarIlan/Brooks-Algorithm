@@ -39,10 +39,13 @@ def vertex_with_less_than_max_degree(G):
 
 
 def bfs_color(G, root):
+    print("Inside BFS Color")
     coloring = {}
     queue = collections.deque([(root, 0)])
     while queue:
         node, level = queue.popleft()
+        print("Colouring Node Number: ")
+        print(node);
         # Assign color based on level
         coloring[node] = level % 2
         for neighbor in G[node]:
@@ -52,11 +55,37 @@ def bfs_color(G, root):
 
 
 def greedy_draw_graph(G):
-    # Choose a root node
     root = list(G.nodes())[0]
+    leaves = [node for node in G.nodes() if G.degree(node) == 1]
 
-    # Color the nodes using BFS coloring
-    coloring = bfs_color(G, root)
+    # Color the leaves first
+    coloring = {}
+    for leaf in leaves:
+        coloring[leaf] = 0
+
+    # Color the rest of the nodes
+    for node in nx.dfs_postorder_nodes(G, source=root):
+        if node != root and node not in coloring:
+            neighbor_colors = set(coloring[neighbor] for neighbor in G[node])
+            for color in range(len(neighbor_colors) + 1):
+                if color not in neighbor_colors:
+                    coloring[node] = color
+                    break
+
+    # Get the color of the first neighbor of the root
+    root_neighbor = next(iter(G[root]))
+    root_color = coloring[root_neighbor]
+
+    # Color vertex 1 and vertex 3 with the same color as the root neighbor
+    coloring[1] = root_color
+    coloring[3] = root_color
+
+    # Color the root node last
+    neighbor_colors = set(coloring[neighbor] for neighbor in G[root])
+    for color in range(len(neighbor_colors) + 1):
+        if color not in neighbor_colors:
+            coloring[root] = color
+            break
 
     # Get the number of colors used in the coloring
     num_colors = max(coloring.values()) + 1
@@ -69,6 +98,7 @@ def greedy_draw_graph(G):
 
     nx.draw(G, with_labels=True, node_color=node_colors)
     plt.show()
+
 
 
 def one_vertex_cover(G):
@@ -109,30 +139,72 @@ def find_x_y_z(graph):
                     return x, y, z
     return None, None, None 
 
+def color_graph_with_spanning_tree(G, T, node1, node2):
+    print("Color graph with spanning tree")
+
+    # Find the leaves in the spanning tree
+    leaves = [node for node in T.nodes() if T.degree(node) == 1]
+
+    # Color the leaves first
+    coloring = {}
+    for leaf in leaves:
+        coloring[leaf] = 0
+
+    # Color the rest of the nodes in a greedy manner
+    for node in nx.dfs_postorder_nodes(T):
+        if node in coloring:
+            continue
+        neighbor_colors = set(coloring[neighbor] for neighbor in T[node])
+        color = 0
+        while color in neighbor_colors:
+            color += 1
+        coloring[node] = color
+
+    # Set the same color for node1 and node2
+    color = max(coloring.values()) + 1
+    coloring[node1] = color
+    coloring[node2] = color
+
+    # Get the number of colors used in the coloring
+    num_colors = max(coloring.values()) + 1
+
+    # Create a colormap with enough colors
+    colormap = cm.get_cmap('viridis', num_colors)
+
+    # Assign the colors to the nodes based on the coloring
+    node_colors = [colormap(coloring[node]) for node in G.nodes()]
+
+    # Print each node and its color
+    for node, color in zip(G.nodes(), node_colors):
+        print(f"Node {node}: Color {color}")
+
+    # Draw the graph with the assigned colors
+    nx.draw(G, with_labels=True, node_color=node_colors)
+    plt.show()
+
+
+
+
+
 
 def main():
     G = nx.Graph()
 
-    G.add_edge(1, 2)
+    G.add_edge(1, 7)
     G.add_edge(1, 5)
     G.add_edge(1, 4)
-    G.add_edge(2, 6)
-    G.add_edge(2, 3)
+    G.add_edge(2, 5)
+    G.add_edge(2, 7)
+    G.add_edge(2, 8)
+    G.add_edge(3, 6)
     G.add_edge(3, 7)
-    G.add_edge(3, 4)
+    G.add_edge(3, 8)
+    G.add_edge(4, 6)
     G.add_edge(4, 8)
     G.add_edge(5, 6)
-    G.add_edge(5, 8)
-    G.add_edge(7, 8)
-    G.add_edge(6, 7)
-    # G.add_edge(4, 8)
-    # G.add_edge(4, 8)
-    # G.add_edge(4, 8)
-    # G.add_edge(4, 8)
-    # G.add_edge(4, 8)
 
-    #G = nx.Graph()
-    #G.add_edges_from([(1, 2), (1, 3), (1, 4)])
+    
+
     if is_complete(G) or has_odd_cycle(G):
         raise Exception("the graph is complete or contains an odd cycle")
 
@@ -148,7 +220,6 @@ def main():
             G, 'color')[node] for node in G.nodes()]
         nx.draw(G, with_labels=True, node_color=node_colors)
         plt.show()
-    
     else:
         vertex = vertex_with_less_than_max_degree(G)
         if vertex is not None:
@@ -178,13 +249,8 @@ def main():
                         modified_graph.add_edge(x, y)
                         modified_graph.add_edge(x, z)
                         T = nx.bfs_tree(modified_graph, x)
-                        greedy_draw_graph(T)
-
-
-
-    print(f"The maximum degree in the graph is: {max_degree(G)}")
-    print(f"The graph is connected: {is_connected(G)}")
-
+                        print(T)
+                        color_graph_with_spanning_tree(G,T,y,z)
 
 if __name__ == "__main__":
     main()
