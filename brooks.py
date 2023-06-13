@@ -1,3 +1,4 @@
+import tkinter as tk
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -13,6 +14,7 @@ def colour_two_deg(G):
     node_colors = [nx.get_node_attributes(G, 'color')[node] for node in G.nodes()]
     nx.draw(G, with_labels=True, node_color=node_colors)
     plt.show()
+
 
 def is_connected(G):
     return nx.is_connected(G)
@@ -32,7 +34,7 @@ def has_odd_cycle(G):
 def is_complete(G):
     num_nodes = len(G.nodes())
     num_edges = len(G.edges())
-    max_edges = (num_nodes * (num_nodes - 1))
+    max_edges = (num_nodes * (num_nodes - 1)) / 2
     return num_edges == max_edges
 
 
@@ -46,23 +48,6 @@ def vertex_with_less_than_max_degree(G):
         if degree < max_deg:
             return node
     return None
-
-
-def bfs_color(G, root):
-    print("Inside BFS Color")
-    coloring = {}
-    queue = collections.deque([(root, 0)])
-    while queue:
-        node, level = queue.popleft()
-        print("Colouring Node Number: ")
-        print(node);
-        # Assign color based on level
-        coloring[node] = level % 2
-        for neighbor in G[node]:
-            if neighbor not in coloring:
-                queue.append((neighbor, level + 1))
-    return coloring
-
 
 
 def one_vertex_cover(G):
@@ -93,6 +78,7 @@ def split_graph(G, cut_vertex):
         subgraphs.append(subgraph)
     return subgraphs
 
+
 def find_x_y_z(graph):
     for x, y in graph.edges():
         for x, z in graph.edges():
@@ -101,7 +87,8 @@ def find_x_y_z(graph):
                 modified_graph.remove_nodes_from([y, z])
                 if nx.is_connected(modified_graph):
                     return x, y, z
-    return None, None, None 
+    return None, None, None
+
 
 def sort_vertices_by_layers(G, T):
     # Perform a breadth-first search on T starting from the root node
@@ -127,7 +114,7 @@ def sort_vertices_by_layers(G, T):
     return sorted_vertices
 
 
-def color_graph_with_spanning_tree(G,T):
+def color_graph_with_spanning_tree(G, T):
     sorted_vertices = sort_vertices_by_layers(G, T)
 
     # Traverse G in the sorted order and assign colors
@@ -144,10 +131,11 @@ def color_graph_with_spanning_tree(G,T):
         # Assign the color to the vertex
         coloring[vertex] = color
 
-        # Draw the graph with the assigned colors
+    # Draw the graph with the assigned colors
     node_colors = [coloring.get(node, -1) for node in G.nodes()]
     nx.draw(G, with_labels=True, node_color=node_colors)
     plt.show()
+
 
 def color_graph_with_spanning_tree_with_nodes(G, T, node1, node2):
     print("Color graph with spanning tree")
@@ -191,87 +179,35 @@ def color_graph_with_spanning_tree_with_nodes(G, T, node1, node2):
     plt.show()
 
 
-def main():
+def build_graph():
     G = nx.Graph()
 
-    G.add_edge(1, 7)
-    G.add_edge(1, 5)
-    G.add_edge(1, 4)
-    G.add_edge(2, 5)
-    G.add_edge(2, 7)
-    G.add_edge(2, 8)
-    G.add_edge(3, 6)
-    G.add_edge(3, 7)
-    G.add_edge(3, 8)
-    G.add_edge(4, 6)
-    G.add_edge(4, 8)
-    G.add_edge(5, 6)
+    edges = edges_entry.get().split()
+    for edge in edges:
+        u, v = edge.split(',')
+        G.add_edge(u, v)
 
-    ### Graphs where not all degrees are the same
-
-    # print("GRAPH ONE")
-    # G.add_edge(1, 2)
-    # G.add_edge(1, 3)
-    # G.add_edge(3, 4)
-    # G.add_edge(4, 2)
-    # G.add_edge(2, 7)
-    # G.add_edge(2, 5)
-    # G.add_edge(6, 5)
-    # G.add_edge(7, 6)
-
-    # print("GRAPH TWO")
-    # G.add_edge(1,2)
-    # G.add_edge(1,3)
-    # G.add_edge(3,4)
-    # G.add_edge(4,2)
-    # G.add_edge(5,2)
-    # G.add_edge(5,6)
-    # G.add_edge(7,6)
-    # G.add_edge(7,2)
-    # G.add_edge(7,8)
-    # G.add_edge(8,9)
-    # G.add_edge(10,9)
-    # G.add_edge(10,4)
-
-
-
-    # G.add_edge(5, 1)
-    # G.add_edge(5, 2)
-    # G.add_edge(5, 3)
-    # G.add_edge(5, 4)
-    # G.add_edge(6, 1)
-    # G.add_edge(6, 2)
-    # G.add_edge(6, 3)
-    # G.add_edge(6, 4)
-    # G.add_edge(7, 1)
-    # G.add_edge(7, 2)
-    # G.add_edge(7, 3)
-    # G.add_edge(7, 4)
-    # G.add_edge(8, 1)
-    # G.add_edge(8, 2)
-    # G.add_edge(8, 3)
-    # G.add_edge(8, 4)
+    pos = nx.spring_layout(G)
 
     if is_complete(G) or has_odd_cycle(G):
-        raise Exception("the graph is complete or contains an odd cycle")
+        raise Exception("The graph is complete or contains an odd cycle")
 
     if max_degree(G) <= 2:
         colour_two_deg(G)
-        exit()
+        return
     else:
         vertex = vertex_with_less_than_max_degree(G)
         if vertex is not None:
             T = nx.bfs_tree(G, vertex)
-            color_graph_with_spanning_tree(G,T)
+            color_graph_with_spanning_tree(G, T)
         else:
             vertex = one_vertex_cover(G)
             if vertex is not None:
                 subgraphs = split_graph(G, vertex)
                 for subgraph in subgraphs:
                     T = nx.bfs_tree(subgraph, vertex)
-                   # color_graph_with_spanning_tree_with_nodes(G,T)
+                    # color_graph_with_spanning_tree_with_nodes(G,T)
             else:
-                print("test3")
                 x, y, z = find_x_y_z(G)
                 if x is not None and y is not None and z is not None:
                     print(f" x = {x} y = {y} z = {z}")
@@ -280,12 +216,24 @@ def main():
                     modified_graph.add_node(y)
                     modified_graph.add_node(z)
                     if x in modified_graph:
+                        print("here")
                         modified_graph.add_edge(x, y)
                         modified_graph.add_edge(x, z)
                         T = nx.bfs_tree(modified_graph, x)
                         print(T)
-                        color_graph_with_spanning_tree_with_nodes(G,T,y,z)
-                       # color_graph_with_spanning_tree(G,T,y,z)
+                        color_graph_with_spanning_tree_with_nodes(G, T, y, z)
 
-if __name__ == "__main__":
-    main()
+
+root = tk.Tk()
+root.title("Graph Builder")
+
+edges_label = tk.Label(root, text="Add Edges (comma-separated):")
+edges_label.pack()
+
+edges_entry = tk.Entry(root)
+edges_entry.pack()
+
+build_graph_button = tk.Button(root, text="Build Graph", command=build_graph)
+build_graph_button.pack()
+
+root.mainloop()
