@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import collections
 
-
 def colour_two_deg(G):
     coloring = nx.coloring.greedy_color(G)
     colors = ['red', 'blue']
@@ -15,10 +14,8 @@ def colour_two_deg(G):
     nx.draw(G, with_labels=True, node_color=node_colors)
     plt.show()
 
-
 def is_connected(G):
     return nx.is_connected(G)
-
 
 def has_odd_cycle(G):
     for node in G.nodes():
@@ -51,9 +48,22 @@ def vertex_with_less_than_max_degree(G):
 
 
 def one_vertex_cover(G):
+    # Get the number of connected components in the original graph
+    original_num_components = nx.number_connected_components(G)
+
     for node in G.nodes():
-        if set(G.neighbors(node)) == set(G.nodes()) - {node}:
-            return node
+        # Create a copy of the graph
+        G_copy = G.copy()
+        # Remove the node
+        G_copy.remove_node(node)
+        # Calculate the number of connected components without this node
+        num_components_without_node = nx.number_connected_components(G_copy)
+
+        # If the number of connected components has increased, this node is a cut vertex
+        if num_components_without_node > original_num_components:
+            return node  # Return the first cut vertex found
+
+    # If no cut vertex is found, return None
     return None
 
 
@@ -206,7 +216,7 @@ def build_graph():
                 subgraphs = split_graph(G, vertex)
                 for subgraph in subgraphs:
                     T = nx.bfs_tree(subgraph, vertex)
-                    # color_graph_with_spanning_tree_with_nodes(G,T)
+                    color_graph_with_spanning_tree_with_nodes(G,T)
             else:
                 x, y, z = find_x_y_z(G)
                 if x is not None and y is not None and z is not None:
@@ -216,7 +226,6 @@ def build_graph():
                     modified_graph.add_node(y)
                     modified_graph.add_node(z)
                     if x in modified_graph:
-                        print("here")
                         modified_graph.add_edge(x, y)
                         modified_graph.add_edge(x, z)
                         T = nx.bfs_tree(modified_graph, x)
